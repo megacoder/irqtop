@@ -1,0 +1,34 @@
+2015-01-21  Tommy Reynolds <Tommy.Reynolds@MegaCoder.com>
+
+	* src/.deps/spiffy.Po: Any .po is a goner.
+
+2015-01-21  Tommy Reynolds <Tommy.Reynolds@MegaCoder.com>
+
+	* Makefile.am: Generate README's of various flavors.
+
+2015-01-21  Tommy Reynolds <Tommy.Reynolds@MegaCoder.com>
+
+	* src/irqtop.c: Roughing error messaging.
+
+2015-01-20  Tommy Reynolds <Tommy.Reynolds@MegaCoder.com>
+
+	* Makefile.am: Generate the various README flavors.
+
+2015-01-20  Tommy Reynolds <Tommy.Reynolds@MegaCoder.com>
+
+	* COPYING, NEWS: Tailored
+
+2015-01-20  Tommy Reynolds <Tommy.Reynolds@MegaCoder.com>
+
+	* AUTHORS: Who dunnit?
+
+2015-01-20  Tommy Reynolds <Tommy.Reynolds@MegaCoder.com>
+
+	* AUTHORS, COPYING, ChangeLog, INSTALL, Makefile.am, NEWS,
+	configure.ac, src/.deps/spiffy.Po, src/Makefile.am, src/irqtop.c: 
+	Baseline
+
+2015-01-20  Tommy Reynolds <oldest.software.guy@gmail.com>
+
+	* Initial commit
+
