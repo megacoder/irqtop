@@ -123,6 +123,16 @@ xstrdup(
 	return( retval );
 }
 
+static	inline	sample_t *
+new_sample_table(
+	void
+)
+{
+	size_t const	space_required = (nirq * ncpu * sizeof( sample_t ));
+	sample_t * const	retval = xmalloc( space_required );
+	return( retval );
+}
+
 static	size_t
 discover_irq_setup(
 	void
@@ -203,15 +213,13 @@ take_samples(
 	void
 )
 {
-	size_t const	space_required = (nirq * ncpu * sizeof( sample_t ));
-	sample_t * const	retval = xmalloc( space_required );
+	sample_t * const	retval = new_sample_table();
 	do	{
 		sample_t * const	space = retval;
 		FILE *		f;
 		char		buf[ BUFSIZ + 1 ];
 		sample_t *	sp;
 
-		memset( space, 0, space_required );
 		f = fopen( proc_interrupts, "rt" );
 		if( !f )	{
 			log_entry(
@@ -301,6 +309,28 @@ Fini:
 	return( retval );
 }
 
+static	sample_t *
+sample_diff(
+	sample_t const * old,
+	sample_t const * new
+)
+{
+	sample_t * const	retval = new_sample_table();
+
+	do	{
+		size_t		nsamples;
+		sample_t *	sp;
+
+		for(
+			sp = retval,
+			nsamples = (ncpu * nirq);
+			(nsamples-- > 0);
+			*sp++ = *new++ - *old++
+		);
+	} while( 0 );
+	return( retval );
+}
+
 int
 main(
 	int		argc,
@@ -361,18 +391,23 @@ main(
 			}
 		}
 		if( on_debug( 1 ) )	{
-			sample_t *	counts;
+			sample_t *	old;
+			sample_t *	new;
+			sample_t *	diff;
 			sample_t *	cp;
 			size_t		cpu;
 			size_t		irq;
 
-			counts = take_samples();
+			old = take_samples();
+			sleep( 5 );
+			new = take_samples();
+			diff = sample_diff( old, new );
 			printf( "    " );
 			for( cpu = 0; cpu < ncpu; ++cpu )	{
 				printf( TFMT, titles[ cpu ] );
 			}
 			putchar( '\n' );
-			cp = counts;
+			cp = diff;
 			for( irq = 0; irq < nirq; ++irq )	{
 				printf( "%3s:", irq_names[ irq ] );
 				for( cpu = 0; cpu < ncpu; ++cpu )	{
@@ -381,7 +416,9 @@ main(
 				putchar( '\n' );
 			}
 			/* Done						 */
-			free( counts );
+			free( old );
+			free( new );
+			free( diff );
 		}
 		retval = EXIT_SUCCESS;
 	} while( 0 );
