@@ -46,9 +46,9 @@ log_entry(
 	if( e )	{
 		fprintf(
 			stderr,
-			"; errno=%d (%s)",
-			e,
-			strerror( e )
+			"; %s (errno=%d)",
+			strerror( e ),
+			e
 		);
 	}
 	fprintf( stderr, ".\n" );
