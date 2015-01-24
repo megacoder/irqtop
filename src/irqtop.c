@@ -250,6 +250,7 @@ take_samples(
 				}
 				*sp++ = CVT( bp, &bp, 10 );
 			}
+			/* Ignore the rest, it's just irq routing	 */
 		}
 		/* Clean up after ourselves				 */
 		if( fclose( f ) )	{
@@ -317,6 +318,17 @@ main(
 			break;
 		}
 		if( ofile )	{
+			if( unlink( ofile ) )	{
+				if( errno != ENOENT )	{
+					log_entry(
+						errno,
+						"cannot unlink '%s'",
+						ofile
+					);
+					exit( 1 );
+					/*NOTREACHED*/
+				}
+			}
 			if( freopen( ofile, "wt", stdout ) != stdout )	{
 				log_entry(
 					errno,
@@ -325,7 +337,13 @@ main(
 				);
 				break;
 			}
-			(void) ftruncate( fileno( stdout ), 0 );
+			if( ftruncate( STDOUT_FILENO, 0 ) )	{
+				log_entry(
+					errno,
+					"ignoring truncate '%s' failure",
+					proc_interrupts
+				);
+			}
 		}
 		discover_irq_setup();
 		if( on_debug( 1 ) )	{
