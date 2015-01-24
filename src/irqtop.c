@@ -20,9 +20,10 @@ typedef	unsigned long long	sample_t;
 static	char *		me = "irqtop";
 static	char *		ofile;
 static	char *		titles[ NCPU+1 ]; /* CPU{n} we have active	 */
-static	size_t		ncpu;		/* Number of CPU's we found	 */
 static	char *		irq_names[ NIRQ+1 ]; /* Spelling of IRQ names	 */
+static	size_t		ncpu;		/* Number of CPU's we found	 */
 static	size_t		nirq;		/* Counts IRQ names we have	 */
+static	size_t		nsamples;	/* Elements in sample matrix	 */
 static	char *		proc_interrupts = "/proc/interrupts";
 static	size_t		debug_level;
 
@@ -128,7 +129,7 @@ new_sample_table(
 	void
 )
 {
-	size_t const	space_required = (nirq * ncpu * sizeof( sample_t ));
+	size_t const	space_required = nsamples * sizeof( sample_t );
 	sample_t * const	retval = xmalloc( space_required );
 	return( retval );
 }
@@ -140,7 +141,7 @@ discover_irq_setup(
 {
 	size_t		retval;
 
-	retval = 0;
+	retval = -1;
 	do	{
 		FILE *		f;
 		char		buf[ BUFSIZ + 1 ];
@@ -203,7 +204,8 @@ discover_irq_setup(
 			);
 			break;
 		}
-		/* retval = FIXME */
+		nsamples = nirq * ncpu;
+		retval = 0;
 	} while( 0 );
 	return( retval );
 }
@@ -318,13 +320,13 @@ sample_diff(
 	sample_t * const	retval = new_sample_table();
 
 	do	{
-		size_t		nsamples;
+		size_t		remain;
 		sample_t *	sp;
 
 		for(
 			sp = retval,
-			nsamples = (ncpu * nirq);
-			(nsamples-- > 0);
+			remain = nsamples;
+			(remain-- > 0);
 			*sp++ = *new++ - *old++
 		);
 	} while( 0 );
