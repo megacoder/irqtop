@@ -176,6 +176,12 @@ discover_irq_setup(
 			if( nirq >= NIRQ )	{
 				break;
 			}
+			/*
+			 * We could skip the ncpu-count tokens and then
+			 * take the rest of the line as the interrupt
+			 * routing description, but maybe in another update.
+			 */
+			/* Ignore rest of lien				 */
 		}
 		irq_names[ nirq ] = NULL;
 		if( fclose( f ) )	{
