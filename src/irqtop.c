@@ -15,6 +15,7 @@
 typedef	unsigned long long	sample_t;
 #define	SFMT	"%15llu"		/* Exactly 15 characters wide	 */
 #define	TFMT	"%15s"			/* Exactly 15 characters wide	 */
+#define	CVT	strtoull		/* Text-to-sample converter	 */
 
 static	char *		me = "irqtop";
 static	char *		ofile;
@@ -247,7 +248,7 @@ take_samples(
 				while( *bp && isspace( *bp ) )	{
 					++bp;
 				}
-				*sp++ = strtoul( bp, &bp, 10 );
+				*sp++ = CVT( bp, &bp, 10 );
 			}
 		}
 		/* Clean up after ourselves				 */
