@@ -9,6 +9,7 @@
 #include <string.h>
 #include <errno.h>
 #include <malloc.h>
+#include <time.h>
 
 #define	NCPU	256			/* Max CPU's we support		 */
 #define	NIRQ	256			/* Max IRQ we support		 */
@@ -334,6 +335,113 @@ sample_diff(
 	return( retval );
 }
 
+static	void
+print_samples(
+	sample_t *	samples
+)
+{
+	time_t const	now = time( NULL );
+	size_t		cpu;
+	size_t		irq;
+	char		tbuf[ 64 ];
+
+	strftime(
+		tbuf,
+		sizeof(tbuf),
+		"%Y%-m-%d %H:%M:%S",
+		localtime( &now )
+	);
+	printf(
+		"--- %s\n",
+		tbuf
+	);
+	printf( "    " );
+	for( cpu = 0; cpu < ncpu; ++cpu )	{
+		printf( TFMT, titles[ cpu ] );
+	}
+	putchar( '\n' );
+	for( irq = 0; irq < nirq; ++irq )	{
+		printf( "%3s:", irq_names[ irq ] );
+		for( cpu = 0; cpu < ncpu; ++cpu )	{
+			printf( SFMT, *samples++ );
+		}
+		putchar( '\n' );
+	}
+}
+
+static	void
+process(
+)
+{
+
+	do	{
+		static const	struct timespec	period = {
+			5, 0
+		};
+		struct itimerspec	interval;
+		int		fd;
+		sample_t *	old;
+		sample_t *	new;
+		sample_t *	diff;
+
+		fd = timerfd_create(
+			CLOCK_MONOTONIC,
+			(0|TFD_CLOEXEC)
+		);
+		if( fd == -1 )	{
+			log_entry(
+				errno,
+				"cannot create timer"
+			);
+			break;
+		}
+		/* Get a baseline sample set				 */
+		old = take_samples();
+		/* Setup the loop interval				 */
+		interval.it_interval = period;
+		interval.it_value    = period;
+		if( timerfd_settime(
+			fd,
+			0,
+			&interval,
+			NULL
+		) )	{
+			log_entry(
+				errno,
+				"could not establish timer interval"
+			);
+			break;
+		}
+		for( ; ; )	{
+			__uint64_t	icount;
+			ssize_t		nbytes;
+
+			nbytes = read( fd, &icount, sizeof( icount ) );
+			if( nbytes != sizeof( icount ) )	{
+				log_entry(
+					errno,
+					"short interval read: %lu",
+					nbytes
+				);
+				break;
+			}
+			if( icount != 1 )	{
+				log_entry(
+					0,
+					"timer interval overrun: %lu",
+					icount
+				);
+			}
+			new = take_samples();
+			diff = sample_diff( old, new );
+			print_samples( diff );
+			free( old );
+			free( diff );
+			old = new;
+		}
+	} while( 0 );
+}
+
 int
 main(
 	int		argc,
@@ -423,6 +531,7 @@ main(
 			free( new );
 			free( diff );
 		}
+		process();
 		retval = EXIT_SUCCESS;
 	} while( 0 );
 	return( retval );
